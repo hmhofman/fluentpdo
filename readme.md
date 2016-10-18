@@ -1,6 +1,4 @@
-# FluentPDO
-
-[![Build Status](https://secure.travis-ci.org/lichtner/fluentpdo.png?branch=master)](http://travis-ci.org/lichtner/fluentpdo)
+# FluentPDO [![Build Status](https://secure.travis-ci.org/envms/fluentpdo.png?branch=master)](http://travis-ci.org/envms/fluentpdo) [![Code Climate](https://codeclimate.com/github/fpdo/fluentpdo/badges/gpa.svg)](https://codeclimate.com/github/fpdo/fluentpdo)
 
 FluentPDO - smart SQL builder for PHP.
 
@@ -14,19 +12,23 @@ FluentPDO is small PHP library for rapid query building. Killer feature is "Smar
 - Build SELECT, INSERT, UPDATE & DELETE queries
 - Small and fast
 - Type hinting with code completion in smart IDEs
-- Requires PHP 5.1+ with any database supported by PDO
+- Requires PHP 5.3+ with any database supported by PDO
+
+## Reference
+
+[Sitepoint - Getting Started with FluentPDO](http://www.sitepoint.com/getting-started-fluentpdo/)
 
 ## Install
 
 ### Composer
 
-The preferred way to install FluentPDO is via [composer](http://getcomposer.org/).
+The preferred way to install FluentPDO is via [composer](http://getcomposer.org/). v1.1.x will be the last until the release of 2.0, so we recommend using 1.1.* to ensure no breaking changes are introduced.
 
 Add in your `composer.json`:
 
 	"require": {
 		...
-		"lichtner/fluentpdo": "dev-master"	
+		"fpdo/fluentpdo": "1.1.*"
 	}
 
 then update your dependencies with `composer update`.
@@ -55,73 +57,89 @@ $query = $fpdo->from('article')
             ->where('published_at > ?', $date)
             ->orderBy('published_at DESC')
             ->limit(5);
-if ($user_id) {
-    $query = $query
-            ->where('user_id', $user_id)
-            ->select('user.name');        // this join table user
-}
 foreach ($query as $row) {
-    echo "$row[name] - $row[title]\n";
+    echo "$row[title]\n";
 }
 ```
-
-And executed query is:
+executed query is:
 
 ```mysql
-SELECT article.*, user.name
+SELECT article.*
 FROM article
-        LEFT JOIN user ON user.id = article.user_id
-WHERE published_at > ? AND user_id = ?
+WHERE published_at > ?
 ORDER BY published_at DESC
 LIMIT 5
 ```
 
+## Smart join builder (how to build queries)
 
-Full documentation can be found on the [FluentPDO homepage](http://fluentpdo.com)
+If you want to join table you can use full sql join syntax. For example we would like to show list of articles with author name:
 
-## Simple Query Examples
+```php
+$query = $fpdo->from('article')
+              ->leftJoin('user ON user.id = article.user_id')
+              ->select('user.name');
+```
+
+It was not so much smart, was it? ;-) If your database uses convention for primary and foreign key names, you can write only:
+
+```php
+$query = $fpdo->from('article')->leftJoin('user')->select('user.name');
+```
+
+Smarter? May be. but **best practice how to write joins is not to write any joins ;-)**
+
+```php
+$query = $fpdo->from('article')->select('user.name');
+```
+
+All three commands create same query:
+
+```mysql
+SELECT article.*, user.name 
+FROM article 
+LEFT JOIN user ON user.id = article.user_id
+```
+
+## Simple CRUD Query Examples
 
 ##### SELECT
 
 ```php
-$query = $fpdo->from('article')->orderBy('published_at DESC')->limit(5);
-// or if you want to one row by primary key
-$query = $fpdo->from('user', 2);
+$query = $fpdo->from('article')->where('id', 1);
+// or shortly if you select one row by primary key
+$query = $fpdo->from('user', 1);
 ```
 
 ##### INSERT
 
 ```php
 $values = array('title' => 'article 1', 'content' => 'content 1');
-$query = $fpdo->insertInto('article')->values($values);
+$query = $fpdo->insertInto('article')->values($values)->execute();
 // or shortly
-$query = $fpdo->insertInto('article', $values);
+$query = $fpdo->insertInto('article', $values)->execute();
 ```
 
 ##### UPDATE
 
 ```php
 $set = array('published_at' => new FluentLiteral('NOW()'));
-$query = $fpdo->update('article')->set($set)->where('id', 1);
-// or shortly
-$query = $fpdo->update('article', $set, 'id', 1);
+$query = $fpdo->update('article')->set($set)->where('id', 1)->execute();
+// or shortly if you update one row by primary key
+$query = $fpdo->update('article', $set, 1)->execute();
 ```
 
 ##### DELETE
 
 ```php
-$query = $fpdo->deleteFrom('article')->where('id', 1);
-// or shortly
-$query = $fpdo->deleteFrom('article', 'id', 1);
+$query = $fpdo->deleteFrom('article')->where('id', 1)->execute();
+// or shortly if you delete one row by primary key
+$query = $fpdo->deleteFrom('article', 1)->execute();
 ```
 
 *Note: INSERT, UPDATE and DELETE will be executed after `->execute()`:*
 
-```php
-$fpdo->deleteFrom('article', 'id', 1)->execute();
-```
-
-Full documentation can be found on the [FluentPDO homepage](http://fluentpdo.com)
+Full documentation can be found on the [FluentPDO homepage](http://fpdo.github.io/fluentpdo/)
 
 ## Licence
 

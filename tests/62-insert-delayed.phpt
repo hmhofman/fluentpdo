@@ -1,5 +1,5 @@
 --TEST--
-insert ignore
+insert delayed
 --FILE--
 <?php
 include_once dirname(__FILE__) . "/connect.inc.php";
@@ -10,13 +10,14 @@ $query = $fpdo->insertInto('article',
 			'user_id' => 1,
 			'title' => 'new title',
 			'content' => 'new content',
-		))->ignore();
+		))->delayed();
 
 echo $query->getQuery() . "\n";
 print_r($query->getParameters());
+
 ?>
 --EXPECTF--
-INSERT IGNORE INTO article (user_id, title, content)
+INSERT DELAYED INTO article (user_id, title, content)
 VALUES (?, ?, ?)
 Array
 (
